@@ -121,6 +121,7 @@ void printArchive(SCREEN *screen, ARCHIVE *arch){
     wclear(screen->wind[2]);
     int n1=2,n2=1;
     box(screen->wind[2], 0, 0);
+    InitializeArchive(arch, screen);
     mvwprintw(screen->wind[2],1,1,"contenido de:%s", arch->path);
     while((arch->di = readdir(arch->dr)) != NULL){
         mvwprintw(screen->wind[2],n1++,1,"%s  %ld",arch->di ->d_name, arch->di ->d_ino);
