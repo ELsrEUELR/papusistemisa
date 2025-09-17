@@ -1,3 +1,4 @@
+//gcc maintop.c funTop.c -o pTOP -lncurses
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
