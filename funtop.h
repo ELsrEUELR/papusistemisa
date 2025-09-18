@@ -18,6 +18,7 @@ typedef struct bff{
     char parameter1[50];
     char parameter2[50];
     char command[50];
+    int commandstatus;
 }BUFFER;
 
 typedef struct screen{
@@ -34,6 +35,7 @@ typedef struct archive{
 int initial(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive);
 int cli(CLI *cliControl,BUFFER *bufferControl,SCREEN *screenControl, ARCHIVE *archive);
 void loadComand(SCREEN *sc, BUFFER *bff,CLI *cli);
+void processBuffer(BUFFER *bff);
 
 //
 

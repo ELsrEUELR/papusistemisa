@@ -25,6 +25,7 @@ void InitializeBuffer(BUFFER *bufferControl){
     bufferControl->command[0] = '\0';
     bufferControl->parameter1[0] = '\0';
     bufferControl->parameter2[0] = '\0';
+    bufferControl->commandstatus = 0;
 }
 
 void InitializeScreen(SCREEN *screenControl){
@@ -66,7 +67,7 @@ int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *a
         do{
             cliControl->cliImput[cliControl->charsCount++] = getch();
         }while(kbhit());
-
+            cliControl->cliImput[cliControl->charsCount] = '\0';
         switch(cliControl->charsCount){
             case 1://keys that return a carter
                 //printable characters
@@ -90,6 +91,8 @@ int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *a
                         cliControl->cliState = -1;
                         break;
                     case 10://KEY_NEWLINE o ENTER
+                        bufferControl->commandstatus = 0;
+                        processBuffer(bufferControl);
                         loadComand(screenControl,bufferControl,cliControl);
                         bufferControl->bufcont = 0;
                         bufferControl->buffer[0] = '\0';
@@ -113,14 +116,46 @@ int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *a
 
 //
 
+void processBuffer(BUFFER *bff){
+    char *token = strtok(bff->buffer, " ");  // primer espacio
+    if (token != NULL) {
+        strcpy(bff->command, token);  // primer palabra -> comando
+        bff->commandstatus = 1;
+    }
+    token = strtok(NULL, " ");           // siguiente palabra
+    if (token != NULL) {
+        strcpy(bff->parameter1, token);
+        bff->commandstatus = 2;
+    }
+    token = strtok(NULL, " ");           // siguiente palabra
+    if (token != NULL) {
+        strcpy(bff->parameter2, token);
+        bff->commandstatus = 3;
+    }
+}
+
 void loadComand(SCREEN *sc, BUFFER *bff,CLI *cli){
-    if(strcmp(bff->buffer, "exit") == 0){
-        cli->cliState = -1;
+    switch (bff->commandstatus){
+        case 1:
+            if(strcmp(bff->command, "exit") == 0){
+                cli->cliState = -1;
+            }
+        break;
+        case 2:
+            if(strcmp(bff->command, "top") == 0){
+                if(strcmp(bff->parameter1,"\%men")){
+                    
+                }
+            }
+        break;
+        case 3:
+        break;
+        default:
+            strcpy(cli->message,"invalid command");
+            printMessage(sc,cli->message);
+        break;
     }
-    else{
-        strcpy(cli->message,"invalid command");
-        printMessage(sc,cli->message);
-    }
+    
 }
 
 //printing functions
