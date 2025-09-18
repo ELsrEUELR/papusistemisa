@@ -13,13 +13,12 @@ int main(){
     cbreak();
     noecho();
     curs_set(0);
-    //keypad(stdscr, TRUE);
+
     BUFFER bufferControl;
     SCREEN screenControl;
     CLI cliControl;
     ARCHIVE archive;
     initial(&cliControl,&bufferControl, &screenControl, &archive);
-    
     endwin();
     return 0;
 }

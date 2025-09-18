@@ -10,6 +10,14 @@
 
 //initialization functions
 
+void initializeCLI(CLI *cliControl){
+    cliControl-> charsCount = 0;
+    cliControl-> cliImput[0] = '\0';
+    cliControl-> cliState = 0;
+    cliControl-> message[0] = '\0';
+
+}
+
 void InitializeBuffer(BUFFER *bufferControl){
     bufferControl->c = '\0';
     bufferControl->bufcont = 0;
@@ -40,58 +48,89 @@ void InitializeArchive(ARCHIVE *arch, SCREEN *screen){
 //
 
 int initial(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive) {
-   
+    initializeCLI(cliControl);
     InitializeBuffer(bufferControl);
     InitializeScreen(screenControl);
-    printbuffer(screenControl, bufferControl);
-    printMessage(screenControl, "Welcome to top! Press double ENTER or ESC to exit.");
     InitializeArchive(archive, screenControl);
-    printArchive(screenControl, archive);
-
     do{
-        windowcontrol(screenControl, bufferControl, archive);
-        cli(cliControl,bufferControl, screenControl, archive);
+        cli(cliControl, bufferControl, screenControl, archive);
+        windowcontrol(screenControl, bufferControl, archive, cliControl);
     }while(cliControl->cliState != -1);
-
     return 0;
 }
 
 int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive) {
     if (kbhit()) {
-        cliControl-> cliimput = getch();
-        if (cliControl-> cliimput >= 32 && cliControl-> cliimput <= 126 && bufferControl->bufcont < 249) {
-            bufferControl->buffer[bufferControl->bufcont] = cliControl-> cliimput;
-            bufferControl->bufcont++;
-            bufferControl->buffer[bufferControl->bufcont] = '\0';
-            screenControl->windupdate[0] = 1;
-        }
-        else if (cliControl-> cliimput == 127 && bufferControl->bufcont != 0) {
-            bufferControl->bufcont--;
-            bufferControl->buffer[bufferControl->bufcont] = '\0';
-            screenControl->windupdate[0] = 1;
-        }
-        else if(cliControl-> cliimput == 27) {
-            cliControl->cliState = -1;
-        }
-        else if(cliControl-> cliimput == 10){
-            bufferControl->bufcont = 0;
-            bufferControl->buffer[0] = '\0';
-            screenControl->windupdate[0] = 1;
-            screenControl->windupdate[1] = 1;
-            screenControl->windupdate[2] = 1;
+        cliControl->charsCount = 0;
+
+        do{
+            cliControl->cliImput[cliControl->charsCount++] = getch();
+        }while(kbhit());
+
+        switch(cliControl->charsCount){
+            case 1://keys that return a carter
+                //printable characters
+                if (cliControl-> cliImput[0] >= 32 && cliControl-> cliImput[0] <= 126 && bufferControl->bufcont < 249) {
+                    bufferControl->buffer[bufferControl->bufcont] = cliControl-> cliImput[0];
+                    bufferControl->bufcont++;
+                    bufferControl->buffer[bufferControl->bufcont] = '\0';
+                    screenControl->windupdate[0] = 1;
+                    return 1;
+                }
+                switch (cliControl->cliImput[0]){////switch for control keys
+                    case 127://KEY_BACKSPACE
+                        if(bufferControl->bufcont != 0){
+                            bufferControl->bufcont--;
+                            bufferControl->buffer[bufferControl->bufcont] = '\0';
+                            screenControl->windupdate[0] = 1;
+                            return 1;
+                        }
+                        break;
+                    case 27://KEY_ESCAPE
+                        cliControl->cliState = -1;
+                        break;
+                    case 10://KEY_NEWLINE o ENTER
+                        loadComand(screenControl,bufferControl,cliControl);
+                        bufferControl->bufcont = 0;
+                        bufferControl->buffer[0] = '\0';
+                        screenControl->windupdate[0] = 1;
+                        screenControl->windupdate[1] = 1;
+                        screenControl->windupdate[2] = 1;
+                        return 1;
+                        break;
+                    default:
+                        break;
+                }
+            break;
+            case 2:
+            break;
+            default:
+            break;
         }
     }
     return 0;
 }
 
+//
+
+void loadComand(SCREEN *sc, BUFFER *bff,CLI *cli){
+    if(strcmp(bff->buffer, "exit") == 0){
+        cli->cliState = -1;
+    }
+    else{
+        strcpy(cli->message,"invalid command");
+        printMessage(sc,cli->message);
+    }
+}
+
 //printing functions
 
-int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch){
+int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch,CLI *cC){
     if(screen->windupdate[0]){
         printbuffer(screen, buffer);
     }
     if(screen->windupdate[1]){
-        printMessage(screen, "");
+        printMessage(screen, cC->message);
     }
     if(screen->windupdate[2]){
         printArchive(screen, arch);
@@ -100,7 +139,7 @@ int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch){
 }
 
 void printbuffer(SCREEN *screen, BUFFER *bufferControl){
-    wclear(screen->wind[0]);
+    werase(screen->wind[0]);
     box(screen->wind[0], 0, 0);
     mvwprintw(screen->wind[0],1,1,"-> ");  
     mvwprintw(screen->wind[0],1,3,"%s",bufferControl->buffer);
@@ -110,7 +149,7 @@ void printbuffer(SCREEN *screen, BUFFER *bufferControl){
 }
 
 void printMessage(SCREEN *screen, char *message){
-    wclear(screen->wind[1]);
+    werase(screen->wind[1]);
     box(screen->wind[1], 0, 0);
     mvwprintw(screen->wind[1],1,1,"%s",message);
     screen->windupdate[1] = 0;
@@ -118,10 +157,10 @@ void printMessage(SCREEN *screen, char *message){
 }
 
 void printArchive(SCREEN *screen, ARCHIVE *arch){
-    wclear(screen->wind[2]);
+    werase(screen->wind[2]);
     int n1=2,n2=1;
     box(screen->wind[2], 0, 0);
-    InitializeArchive(arch, screen);
+    rewinddir(arch->dr);
     mvwprintw(screen->wind[2],1,1,"contenido de:%s", arch->path);
     while((arch->di = readdir(arch->dr)) != NULL){
         mvwprintw(screen->wind[2],n1++,1,"%s  %ld",arch->di ->d_name, arch->di ->d_ino);
