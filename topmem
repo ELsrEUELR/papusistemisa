@@ -1,0 +1,44 @@
+TOP 40 PROCESOS CON MAS MEMORIA
+================================
+PID	COMMAND		SIZE(kB)
+---	-------		--------
+14983	code           	1481791412
+15008	code           	1463212220
+14910	code           	1461785832
+15021	code           	1461512752
+15020	code           	1461495808
+15166	code           	1459752532
+14956	code           	34125768
+14960	code           	34076344
+14917	code           	34009792
+14914	code           	34009776
+14915	code           	34009760
+14932	chrome_crashpad	33576156
+12816	firefox        	12194824
+11496	gnome-shell    	4700768
+16047	cpptools-srv   	4266908
+15376	cpptools-srv   	4266400
+21566	gjs            	4046280
+12159	gjs            	3215924
+13719	Isolated Web Co	3183324
+15511	Isolated Web Co	3011568
+15457	Isolated Web Co	2972568
+2468	named          	2819152
+15547	Isolated Web Co	2791108
+12090	gjs            	2668576
+2000	snapd          	2663120
+11604	gjs            	2660404
+18290	Isolated Web Co	2625020
+18412	Isolated Web Co	2612652
+18331	Isolated Web Co	2558200
+13264	Privileged Cont	2524796
+14250	Isolated Web Co	2493616
+18235	Isolated Web Co	2488540
+13221	WebExtensions  	2479136
+14441	Isolated Web Co	2469720
+19300	Web Content    	2431508
+20617	Web Content    	2431508
+21223	Web Content    	2431508
+3260	mysqld         	2311720
+9581	apache2        	2006648
+9582	apache2        	2006648

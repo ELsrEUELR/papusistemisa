@@ -9,16 +9,21 @@
 #include "funtop.h"
 
 int main(){
-    initscr();
-    cbreak();
-    noecho();
-    curs_set(0);
+    initscr();//inicializa pantalla de ncurses
+    cbreak();//las teclas se leen directamnete sin esperar "enter"
+    noecho();//evita que se imprima lo que se este capturando
+    curs_set(0);//oculta el cursor de la terminal
 
-    BUFFER bufferControl;
-    SCREEN screenControl;
-    CLI cliControl;
-    ARCHIVE archive;
-    initial(&cliControl,&bufferControl, &screenControl, &archive);
-    endwin();
+    //DELCARACION DE LAS ESTRUCTURAS QUE SE USARAN 
+    BUFFER bufferControl; //PARA MANEJAR EL TEXTO
+    SCREEN screenControl; //MANEJA LAS VENTANAS
+    CLI cliControl;       //MANEJA EL CLI
+    ARCHIVE archive;      //PARA MANEJAR DIRECTORIOS
+    PROCESS process;      //PARA MANEJAR EL CONTENIDO DE CADA PROCESO
+
+    //FUNCION QUE SE ENCARGA DE TODA LA EJECUCION
+    initial(&cliControl,&bufferControl, &screenControl, &archive, &process);
+    
+    endwin();//finaliza el ncurses
     return 0;
 }
