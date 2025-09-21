@@ -8,9 +8,9 @@ author:
   - "Luis Angel Gutierrez Juarez"
   - "Alfredo Pineda Prado"
   - "Magdalena Reyes Chavez"
-date: "Septiembre 18, 2025"
+date: "Septiembre 21, 2025"
 subject: "Sistemas Operativos"
-keywords: []
+keywords: [top, procesos, memoria, ncurses, C, Linux]
 
 # Información institucional
 institution: "Universidad Michoacana de San Nicolás de Hidalgo"
