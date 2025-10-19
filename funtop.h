@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 #include <dirent.h>
+#include "proyct2.h"
 
 //DECLARACION DE ESTRUCTURAS-----------------------
 
@@ -12,7 +13,9 @@ typedef struct cli{
     char cliImput[10];      //entraqda capturada
     int charsCount;         //contador de cararteres
     char namearch[100];     //nombre del archivo a leer
-    char message[200];      //mensaje que se imprimira
+    char message1[200];      //mensaje que se imprimira
+    char message2[200];      
+    char message3[200];      
     char currentFile[200];  //nombre del archivo actual o mostrado
     int row;                //renglon leido
     int maxrow;             //renglines maximos
@@ -25,6 +28,7 @@ typedef struct bff{
     char c;             //carater auxiliar
     char buffer[250];   //buffer
     int bufcont;        //contador del buffer
+    char remaining[100];
     char parameter1[50];//cadena donde se guerda el parametro 1
     char parameter2[50];//cadena donde se guerda el parametro 2
     char command[50];   //cadena donde se guerda el comando
@@ -58,13 +62,16 @@ typedef struct process{
 
 void InitializeBuffer(BUFFER *bufferControl);
 void InitializeScreen(SCREEN *screenControl);
-void InitializeArchive(ARCHIVE *arch, SCREEN *screen);
+void InitializeArchive(ARCHIVE *arch, SCREEN *screen,CLI *cli);
 void initializeCLI(CLI *cliControl);
+
+
+int modecli(SCREEN *sc, BUFFER *bf, CLI *cli);
 
 ////FUNCIONES DE CONTROL
 
-int initial(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive,PROCESS *process);
-int cli(CLI *cliControl,BUFFER *bufferControl,SCREEN *screenControl, ARCHIVE *archive);
+int initial(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive,PROCESS *process, CORE *core);
+int cli(CLI *cliControl,BUFFER *bufferControl,SCREEN *screenControl, ARCHIVE *archive, CORE *core);
 void loadComand(SCREEN *sc, BUFFER *bff,CLI *cli, ARCHIVE *archive);
 void processBuffer(BUFFER *bff);
 
@@ -73,15 +80,17 @@ void processBuffer(BUFFER *bff);
 int isNumber(const char *str);
 void getProcessCommand(int pid, char *command, size_t size);
 long getProcessMemorySize(int pid);
-void writeProcessInfo(ARCHIVE *arch, SCREEN *screen, const char *filename);
+void writeProcessInfo(ARCHIVE *arch, SCREEN *screen, CLI *cli,const char *filename);
 
 int compareProcesses(const void *a, const void *b);
-void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, const char *filename, int topN);
+void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, CLI *cli, const char *filename, int topN);
 
 ////FUNCIONES DE IMPRECION
 
-int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch,CLI *cC);
+int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch,CLI *cC,CORE *core);
 void printbuffer(SCREEN *screens, BUFFER *bufferControl);
-void printMessage(SCREEN *screen, char *message);
+void printMessage(SCREEN *screen, CLI * cli);
+void printSTATE1(SCREEN *screen);
 void printArchive(SCREEN *screen, ARCHIVE *arch,BUFFER *buffer,CLI *cli);
+void printPROY2(SCREEN *screen);
 #endif
