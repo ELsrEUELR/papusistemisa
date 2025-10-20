@@ -15,7 +15,8 @@ typedef struct cli{
     char namearch[100];     //nombre del archivo a leer
     char message1[200];      //mensaje que se imprimira
     char message2[200];      
-    char message3[200];      
+    char message3[200];       
+    char message4[200];    
     char currentFile[200];  //nombre del archivo actual o mostrado
     int row;                //renglon leido
     int maxrow;             //renglines maximos
@@ -29,9 +30,9 @@ typedef struct bff{
     char buffer[250];   //buffer
     int bufcont;        //contador del buffer
     char remaining[100];
+    char command[50];   //cadena donde se guerda el comando
     char parameter1[50];//cadena donde se guerda el parametro 1
     char parameter2[50];//cadena donde se guerda el parametro 2
-    char command[50];   //cadena donde se guerda el comando
     int commandstatus;  //variable para saber el numero de caracteres que regresa cada tecla
 }BUFFER;
 
@@ -92,5 +93,4 @@ void printbuffer(SCREEN *screens, BUFFER *bufferControl);
 void printMessage(SCREEN *screen, CLI * cli);
 void printSTATE1(SCREEN *screen);
 void printArchive(SCREEN *screen, ARCHIVE *arch,BUFFER *buffer,CLI *cli);
-void printPROY2(SCREEN *screen);
 #endif

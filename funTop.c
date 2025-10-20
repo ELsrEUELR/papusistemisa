@@ -5,6 +5,7 @@
 #include <dirent.h>     // Manejo de directorios 
 #include <unistd.h>     // Funciones del sistema UNIX
 #include <ctype.h>      // Funciones para clasificar y manipular caracteres 
+#include <pthread.h>
 
 #include "funtop.h"     // Archivo de cabecera propio:contiene prototipos de funciones 
 #include "lista.h"
@@ -20,6 +21,7 @@ void initializeCLI(CLI *cliControl){//funcion para inicializar la cli
     cliControl-> message1[0] = '\0';
     cliControl-> message2[0] = '\0';
     cliControl-> message3[0] = '\0';
+    cliControl-> message4[0] = '\0';
     cliControl->row = 0;
     cliControl->maxrow = 0;
 
@@ -41,7 +43,7 @@ void InitializeScreen(SCREEN *screenControl){//funcion para inicailizar el arreg
     screenControl->wind[1] = newwin(7,150,3,0);  //ventana para mostrar mensajes
     screenControl->wind[2] = newwin(34,100,10,0);//ventana para mostrar el archivo
     screenControl->wind[3] = newwin(34,75,18,101);
-    screenControl->wind[4] = newwin(8,100,10,101);
+    screenControl->wind[4] = newwin(8,150,10,101);
     screenControl->windupdate[0] = 1; 
     screenControl->windupdate[1] = 1;   //variable entera que nos ayuda a actualizar las vantanas 
     screenControl->windupdate[2] = 1;
@@ -515,6 +517,7 @@ void printMessage(SCREEN *screen, CLI *cli){
     mvwprintw(screen->wind[1],1,1,"%s",cli->message1);//cordenas en donde imprimimos el mensaje
     mvwprintw(screen->wind[1],2,1,"%s",cli->message2);
     mvwprintw(screen->wind[1],4,1,"%s",cli->message3);
+    mvwprintw(screen->wind[1],5,1,"--%s",cli->message4);
     screen->windupdate[1] = 0;
     wrefresh(screen->wind[1]);
 }
@@ -525,16 +528,6 @@ void printSTATE1(SCREEN *screen){
     mvwprintw(screen->wind[2],1,1,"INGRESE AL PROYECTO:");
     mvwprintw(screen->wind[2],2,1,"PROY1");
     mvwprintw(screen->wind[2],3,1,"PROY2");
-    screen->windupdate[2] = 0;
-    wrefresh(screen->wind[2]);
-    
-}
-
-
-void printPROY2(SCREEN *screen){
-    werase(screen->wind[2]);
-    box(screen->wind[2], 0, 0);
-    mvwprintw(screen->wind[2],1,1,"HOLA");
     screen->windupdate[2] = 0;
     wrefresh(screen->wind[2]);
     

@@ -3,30 +3,30 @@
 #include <string.h>
 #include"lista.h"
 
-void imprimir_lista(struct nodo *lista){
-
-  while(lista != NULL){
-    printf("%d -> ",lista->id);
-    lista = lista-> sig;
-  }
-  printf("NULL\n");
+int contarNODO(NODO *lista){
+    int n_nodos=0;
+    while(lista != NULL){
+        n_nodos++;
+        lista = lista-> sig;
+    }
+    return n_nodos;
 }
 
 NODO * crear_nodo (int id,char name[]){
-  NODO *nodo= NULL;
-  nodo =(NODO *) malloc (sizeof (NODO));
+    NODO *nodo= NULL;
+    nodo =(NODO *) malloc (sizeof (NODO));
 
-  if (NULL != nodo){
-    nodo-> id= id;
-    strcpy(nodo->name, name);
-    for(int i = 0; i < 4; i++){
-        nodo->Xregisters[i] = 0;
+    if (NULL != nodo){
+        nodo-> id= id;
+        strcpy(nodo->name, name);
+        for(int i = 0; i < 4; i++){
+            nodo->Xregisters[i] = 0;
+        }
+        nodo->PC = 0;
+        nodo->IR[0] = '\0';
+        nodo-> sig= NULL;
     }
-    nodo->PC = 0;
-    nodo->IR[0] = '\0';
-    nodo-> sig= NULL;
-  }
-  return nodo;
+    return nodo;
 }
 
 void insertar_nodo(NODO **lista, NODO *nodo){

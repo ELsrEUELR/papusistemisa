@@ -5,6 +5,7 @@
 #include <ncurses.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "funtop.h"
 #include "proyct2.h"

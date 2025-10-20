@@ -11,7 +11,7 @@ typedef struct nodo {
     struct nodo *sig;
 }NODO;
 
-void imprimir_lista(struct nodo *);
+int contarNODO(NODO *lista);
 
 NODO * crear_nodo (int n,char name[]);
 
