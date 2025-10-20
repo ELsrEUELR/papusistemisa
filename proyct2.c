@@ -115,7 +115,7 @@ void execution_processes(SCREEN *sc, BUFFER *bff, CLI *cli, CORE *core, int n_li
             
             if(core->LISTEJECUCION[n_lista] != NULL){
                 if(linea != NULL) {
-                    strncpy(core->LISTEJECUCION[n_lista]->IR, linea, 31);//COPEAMOS LA CADENA QUE SE GUARDO EN LINEA A IR DE LA LISTA DE EJECUACION NUMERO N;
+                    strncpy(core->LISTEJECUCION[n_lista]->IR, linea, 31);//COPIAMOS LA CADENA QUE SE GUARDO EN LINEA A IR DE LA LISTA DE EJECUACION NUMERO N;
                     core->LISTEJECUCION[n_lista]->IR[31] = '\0';
                     free(linea);
                 } else {
