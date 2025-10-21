@@ -26,12 +26,16 @@ void initializecore(CORE *core){
 
     core->intructionsID = 0;
 
+    memset(core->arr, 0, sizeof(core->arr));
+    memset(core->printthread, 0, sizeof(core->printthread));
+    core->band = 0;
     pthread_mutex_init(&core->mutex, NULL);
 }
 
 void comandPROY2(SCREEN *sc, BUFFER *bff, CLI *cli,CORE *core) {
     int n;
     NODO *nodo= NULL;
+
     //dependiendo de el numero_reg de palabras ingresadas se manejaran los comandos
     switch (bff->commandstatus) {
         case 1: //Solo comando
@@ -44,7 +48,7 @@ void comandPROY2(SCREEN *sc, BUFFER *bff, CLI *cli,CORE *core) {
                 sc->windupdate[2] = 1;
             }
             else if(strcmp(bff->command, "LOAD") == 0){
-                strcpy(cli->message1, "load 'nombre del archivo'");
+                strcpy(cli->message1, "load 'nombre del archivo");
                 printMessage(sc,cli);
             }
         break;
@@ -89,7 +93,7 @@ void frecuency_execution(SCREEN *sc, BUFFER *bff, CLI *cli, CORE *core){///MANEJ
         core->completedcycles++;                //se completo un cliclo
         
         char msg[200];
-        sprintf(msg, "Ciclo completado: %d/%d del quantum", core->completedcycles, core->cuantum);
+        sprintf(msg, "Ciclo completado: %d/%d del quantum            numero maximo de ciclos:%ld", core->completedcycles, core->cuantum,core->maxCycles);
         
         strcpy(cli->message1, msg);
         //actualizanmos ventanas
@@ -111,8 +115,19 @@ void execution_processes(SCREEN *sc, BUFFER *bff, CLI *cli, CORE *core, int n_li
         if(core->LISTEJECUCION[n_lista] != NULL) {
             core->LISTEJECUCION[n_lista]->PC++;
 
+            char arr1[100];
+            char arr2[100];
+            arr1[0] = '\0';
+            arr2[0] = '\0';
+
+            sprintf(arr1, ">> proceso %d de nombre ", core->LISTEJECUCION[n_lista]->id);
+            sprintf(arr2, " y de PC %d ejecuto:  ", core->LISTEJECUCION[n_lista]->PC);
+            strcat(arr1,core->LISTEJECUCION[n_lista]->name);
+            strcat(arr1,arr2);
             char *linea = leer_renglon(core->LISTEJECUCION[n_lista]->name, core->LISTEJECUCION[n_lista]->PC);
-            
+            strcat(arr1, linea);
+            strncpy(core->arr[n_lista],arr1,99);
+
             if(core->LISTEJECUCION[n_lista] != NULL){
                 if(linea != NULL) {
                     strncpy(core->LISTEJECUCION[n_lista]->IR, linea, 31);//COPIAMOS LA CADENA QUE SE GUARDO EN LINEA A IR DE LA LISTA DE EJECUACION NUMERO N;
@@ -518,7 +533,7 @@ int instructionDEC(NODO* pcb, int p1, int p2, int mode){
 
 void execute_all_processes_threaded(SCREEN *sc, BUFFER *bff, CLI *cli, CORE *core) {
     int num_hilos = 0;
-    
+
     for(int i = 0; i < 4; i++) {
         if(core->LISTEJECUCION[i] != NULL) {
             THR_ARG *args = malloc(sizeof(THR_ARG));
@@ -540,6 +555,10 @@ void execute_all_processes_threaded(SCREEN *sc, BUFFER *bff, CLI *cli, CORE *cor
         }
     }
 
+    isertprintproccess(sc,bff,cli,core);
+    memset(core->arr, 0, sizeof(core->arr));
+
+    sc->windupdate[2] = 1;
     sc->windupdate[3] = 1;
     sc->windupdate[4] = 1;
 }
@@ -835,11 +854,38 @@ void printLISTexecute(SCREEN *SC, CLI *cli, CORE *c) {
     wrefresh(SC->wind[4]);
 }
 
-void printPROY2(SCREEN *screen){
+void printPROY2(SCREEN *screen,CORE *core){
     werase(screen->wind[2]);
     box(screen->wind[2], 0, 0);
-    mvwprintw(screen->wind[2],1,1,"HOLA");
+    for(int i = 0; i < 45; i++){
+        mvwprintw(screen->wind[2],i+1,1,"%s", core->printthread[i]);
+    }
     screen->windupdate[2] = 0;
     wrefresh(screen->wind[2]);
     
+}
+
+void isertprintproccess(SCREEN *sc, BUFFER *bff, CLI *cli, CORE *core){
+    pthread_mutex_lock(&core->mutex);
+
+    if(core->band < 45){
+        strcpy(core->printthread[core->band], core->arr[0]);
+        strcpy(core->printthread[core->band + 1], core->arr[1]);
+        strcpy(core->printthread[core->band + 2], core->arr[2]);
+        strcpy(core->printthread[core->band + 3], core->arr[3]);
+        strcpy(core->printthread[core->band + 4], "");
+        core->band += 5;
+    } else {
+        for (int i = 0; i < 40; i++) {
+            strcpy(core->printthread[i], core->printthread[i + 5]);
+        }
+
+        strcpy(core->printthread[40], core->arr[0]);
+        strcpy(core->printthread[41], core->arr[1]);
+        strcpy(core->printthread[42], core->arr[2]);
+        strcpy(core->printthread[43], core->arr[3]);
+        strcpy(core->printthread[44], "");
+    }
+
+    pthread_mutex_unlock(&core->mutex);
 }

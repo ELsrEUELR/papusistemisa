@@ -20,6 +20,7 @@ typedef struct cli{
     char currentFile[200];  //nombre del archivo actual o mostrado
     int row;                //renglon leido
     int maxrow;             //renglines maximos
+    int controlfrec;        
     char lines[3000][200];  //arreglo para copear el archivo
 }CLI;
 

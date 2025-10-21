@@ -24,6 +24,7 @@ void initializeCLI(CLI *cliControl){//funcion para inicializar la cli
     cliControl-> message4[0] = '\0';
     cliControl->row = 0;
     cliControl->maxrow = 0;
+    cliControl->controlfrec = 0;
 
 }
 
@@ -41,7 +42,7 @@ void InitializeBuffer(BUFFER *bufferControl){//funcion para inicilaizar el buffe
 void InitializeScreen(SCREEN *screenControl){//funcion para inicailizar el arreglo de ventanas
     screenControl->wind[0] = newwin(3,200,0,0);  //ventara para mostrar buffer
     screenControl->wind[1] = newwin(7,150,3,0);  //ventana para mostrar mensajes
-    screenControl->wind[2] = newwin(34,100,10,0);//ventana para mostrar el archivo
+    screenControl->wind[2] = newwin(50,100,10,0);//ventana para mostrar el archivo
     screenControl->wind[3] = newwin(34,75,18,101);
     screenControl->wind[4] = newwin(8,150,10,101);
     screenControl->windupdate[0] = 1; 
@@ -175,6 +176,18 @@ int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *a
                                 printArchive(screenControl,archive,bufferControl,cliControl);
                             }
                         }
+                    break;
+                    case 67:
+                        if (core->maxCycles > 100000) {  // límite mínimo para no hacer 0
+                            core->maxCycles -= 100000;      // duplica la velocidad
+                        }
+                            printMessage(screenControl,cliControl);
+                    break;
+                    case 68:
+                        if (core->maxCycles < 800000000) {  // límite máximo
+                            core->maxCycles += 100000;          // reduce la velocidad
+                        }
+                        printMessage(screenControl,cliControl);
                     break;
                 } 
             break;
@@ -486,7 +499,7 @@ int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch,CLI *cC,CORE *cor
             printArchive(screen, arch,buffer,cC);
         }
         else if(cC->cliState == 3){
-            printPROY2(screen);
+            printPROY2(screen,core);
         }
     }
     if(screen->windupdate[3]){

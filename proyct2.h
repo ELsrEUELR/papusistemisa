@@ -24,7 +24,9 @@ typedef struct core{
 
     pthread_t thread_FOR_list[4];
     pthread_t thread_FOR_instructions[4];
-
+    char arr[4][100];
+    char printthread[45][100];
+    int band;
     pthread_mutex_t mutex;
     
 }CORE;
@@ -70,6 +72,6 @@ int instructionDEC(NODO* pcb, int p1, int p2, int mode);
 
 void printLISTwaiting(SCREEN * SC, CLI *cli,CORE *c);
 void printLISTexecute(SCREEN * SC, CLI *cli,CORE *c);
-void printPROY2(SCREEN *screen);
-
+void printPROY2(SCREEN *screen,CORE *core);
+void isertprintproccess(SCREEN *sc, BUFFER *bff, CLI *cli, CORE *core);
 #endif
