@@ -1,0 +1,9 @@
+MoV Ax -12
+add bx 31
+inc ax
+dec bx
+Mul cX 3140
+aDD ax 10
+div bx ax
+end
+MOV RAX 3

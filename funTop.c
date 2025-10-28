@@ -5,8 +5,10 @@
 #include <dirent.h>     // Manejo de directorios 
 #include <unistd.h>     // Funciones del sistema UNIX
 #include <ctype.h>      // Funciones para clasificar y manipular caracteres 
+#include <pthread.h>
 
 #include "funtop.h"     // Archivo de cabecera propio:contiene prototipos de funciones 
+#include "lista.h"
 #include "kbhit.h"      // Archivo de cabecera para detectar si una tecla fue presionada sin necesidad de esperar con `getch()`.
 
 
@@ -16,9 +18,13 @@ void initializeCLI(CLI *cliControl){//funcion para inicializar la cli
     cliControl-> charsCount = 0;
     cliControl-> cliImput[0] = '\0';
     cliControl-> cliState = 0;
-    cliControl-> message[0] = '\0';
+    cliControl-> message1[0] = '\0';
+    cliControl-> message2[0] = '\0';
+    cliControl-> message3[0] = '\0';
+    cliControl-> message4[0] = '\0';
     cliControl->row = 0;
     cliControl->maxrow = 0;
+    cliControl->controlfrec = 0;
 
 }
 
@@ -29,23 +35,28 @@ void InitializeBuffer(BUFFER *bufferControl){//funcion para inicilaizar el buffe
     bufferControl->command[0] = '\0';
     bufferControl->parameter1[0] = '\0';
     bufferControl->parameter2[0] = '\0';
+    bufferControl->remaining[0] = '\0';
     bufferControl->commandstatus = 0;
 }
 
 void InitializeScreen(SCREEN *screenControl){//funcion para inicailizar el arreglo de ventanas
     screenControl->wind[0] = newwin(3,200,0,0);  //ventara para mostrar buffer
     screenControl->wind[1] = newwin(7,150,3,0);  //ventana para mostrar mensajes
-    screenControl->wind[2] = newwin(34,100,10,0);//ventana para mostrar el archivo
+    screenControl->wind[2] = newwin(50,100,10,0);//ventana para mostrar el archivo
+    screenControl->wind[3] = newwin(34,75,18,101);
+    screenControl->wind[4] = newwin(8,150,10,101);
     screenControl->windupdate[0] = 1; 
     screenControl->windupdate[1] = 1;   //variable entera que nos ayuda a actualizar las vantanas 
     screenControl->windupdate[2] = 1;
+    screenControl->windupdate[3] = 1;
+    screenControl->windupdate[4] = 1;
 }
 
-void InitializeArchive(ARCHIVE *arch, SCREEN *screen){  //inicilizar estructura para manejar el directoro
+void InitializeArchive(ARCHIVE *arch, SCREEN *screen,CLI *cli){  //inicilizar estructura para manejar el directoro
     arch->path = "/proc/";              
     arch->dr = opendir(arch->path);
     if (arch->dr == NULL) {
-        printMessage(screen, "no se pudo abrir el directorio");
+        printMessage(screen, cli);
         exit(1);
     }
 }
@@ -53,18 +64,22 @@ void InitializeArchive(ARCHIVE *arch, SCREEN *screen){  //inicilizar estructura 
 //FUNCIONES DE CONTROL-----------------------------------------------------------------------------
          
 //funcion para poder inicializar todo y el ciclo que estara ejecutando el programa
-int initial(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive,PROCESS *process) {
+int initial(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive,PROCESS *process,CORE *core) {
     //inicializamos todas nuestras struc;
     initializeCLI(cliControl);                 
     InitializeBuffer(bufferControl);
     InitializeScreen(screenControl);
-    InitializeArchive(archive, screenControl);
+    InitializeArchive(archive, screenControl,cliControl);
+    initializecore(core);
 
     //ciclo do que matendra el programa en ejecucion hasta no escribir "exit" en el bufer o presionar esq
     //se controla tanto la ejecucion de los comandos como la imprecion de las ventanas
+    cliControl->cliState = 1;
     do{
-        cli(cliControl, bufferControl, screenControl, archive);
-        windowcontrol(screenControl, bufferControl, archive, cliControl);
+        cli(cliControl, bufferControl, screenControl, archive, core);
+        windowcontrol(screenControl, bufferControl, archive, cliControl,core);
+        frecuency_execution(screenControl,bufferControl,cliControl,core);
+        verifyexecution(screenControl,bufferControl,cliControl,core);
     }while(cliControl->cliState != -1);
     return 0;
 }
@@ -72,7 +87,7 @@ int initial(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIV
 
 //funcion encargada del estado de la cli,de las entradas al buffer,la actualizacion de las ventans
 // y maneja la informacion del directorio con el que va trabajar
-int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive) {    
+int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *archive, CORE *core) {    
     if (kbhit()) {     //revisa si hay teclas precionas
         cliControl->charsCount = 0;  //inicilaizamos nuetro contador de caracteres
         
@@ -111,13 +126,27 @@ int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *a
                         //al precionar el enter :
                         bufferControl->commandstatus = 0;
                         processBuffer(bufferControl);  //se verifica si se escribio o no un comando
-                        loadComand(screenControl,bufferControl,cliControl,archive);//en caso de que si se procesa este
-                        printArchive(screenControl,archive,bufferControl,cliControl);//actualizamos la ventana que imprime el dir.
+
+                        modecli(screenControl,bufferControl,cliControl);
+                        if(cliControl->cliState == 1){
+                            printSTATE1(screenControl);
+                        }
+                        else if(cliControl->cliState == 2){
+                            loadComand(screenControl,bufferControl,cliControl,archive);//en caso de que si se procesa este
+                            printArchive(screenControl,archive,bufferControl,cliControl);//actualizamos la ventana que imprime el dir.
+                        }
+                        else if(cliControl->cliState == 3){
+                            comandPROY2(screenControl,bufferControl,cliControl,core);
+                        }
+
                         //aqui solo regresamos nuestras cadenas a un valor inicial para la siguiente captura 
                         bufferControl->bufcont = 0;
                         bufferControl->buffer[0] = '\0';
                         screenControl->windupdate[0] = 1;
                         screenControl->windupdate[1] = 1;
+                        screenControl->windupdate[2] = 1;
+                        screenControl->windupdate[3] = 1;
+                        screenControl->windupdate[4] = 1;
                         bufferControl->command[0] = '\0';
                         bufferControl->parameter1[0] = '\0';
                         bufferControl->parameter2[0] = '\0';
@@ -133,16 +162,32 @@ int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *a
                         if(cliControl->row >= 0){
                             //esto es para desplazarce por la ventana que nos muestra los procesos
                             cliControl->row--;
-                            printArchive(screenControl,archive,bufferControl,cliControl);
+                            if(cliControl->cliState == 2){
+                                printArchive(screenControl,archive,bufferControl,cliControl);
+                            }
                         }
                     break;
                     case 66://no capta 66 significa tecla abajo
                         if(cliControl->row < cliControl->maxrow){
                             //esto es para desplazarce por la ventana que nos muestra los procesos
                             cliControl->row++;
-                            printArchive(screenControl,archive,bufferControl,cliControl);
 
+                            if(cliControl->cliState == 2){
+                                printArchive(screenControl,archive,bufferControl,cliControl);
+                            }
                         }
+                    break;
+                    case 67:
+                        if (core->maxCycles > 100000) {  // límite mínimo para no hacer 0
+                            core->maxCycles -= 100000;      // duplica la velocidad
+                        }
+                            printMessage(screenControl,cliControl);
+                    break;
+                    case 68:
+                        if (core->maxCycles < 800000000) {  // límite máximo
+                            core->maxCycles += 100000;          // reduce la velocidad
+                        }
+                        printMessage(screenControl,cliControl);
                     break;
                 } 
             break;
@@ -154,13 +199,27 @@ int cli(CLI *cliControl,BUFFER *bufferControl, SCREEN *screenControl, ARCHIVE *a
 }
 
 
+int modecli(SCREEN *sc, BUFFER *bf, CLI *cli){
+    if( cli->cliState == 1){
+        if(bf->commandstatus == 1){
+            if(strcmp(bf->command, "PROY1") == 0){
+                cli->cliState = 2;
+            }
+            else if(strcmp(bf->command, "PROY2") == 0){
+                cli->cliState = 3;
+            }
+        }
+    }
+    else{
+        return cli-> cliState;
+    }
+    return cli->cliState;
+}
+
 //funcion que nos separara el bufer en comando parametro1 y parametro2
 //en caso de haber ingresado 1 2 o tres palabras
 void processBuffer(BUFFER *bff) {
     // Inicializamos por seguridad
-    bff->command[0] = '\0';
-    bff->parameter1[0] = '\0';
-    bff->parameter2[0] = '\0';
     bff->commandstatus = 0;
 
     char *token = strtok(bff->buffer, " ");  // Primer palabra
@@ -196,14 +255,17 @@ void loadComand(SCREEN *sc, BUFFER *bff, CLI *cli, ARCHIVE *archive) {
             if (strcmp(bff->command, "exit") == 0){ //verificamos si escribimos "exit"
                 cli->cliState = -1; //en caso de si, poner el estado de la cli para salir
             }
+            else if(strcmp(bff->command, "exit..") == 0){
+                cli->cliState = 1;
+                sc->windupdate[2] = 1;
+            }
             else if (strcmp(bff->command, "proclist") == 0) {//verificamos si se escribio "proclist" ->comando para lista de procesos
                 strncpy(cli->namearch, bff->command, sizeof(cli->namearch) - 1);//copiamos el nombre del comando 
                 cli->namearch[sizeof(cli->namearch) - 1] = '\0';
-                writeProcessInfo(archive, sc, bff->command);//llamanos a la funcion que se encarga de la lista de procesos
+                writeProcessInfo(archive, sc, cli, bff->command);//llamanos a la funcion que se encarga de la lista de procesos
             }
         break;
         case 3: // Comando + 2 parámetros
-
             if (strcmp(bff->command, "proc") == 0) {//verivicamos si escribimos "proc"
 
                 if (strcmp(bff->parameter1, "topmem") == 0) {//verificamos el primer parametro del comando
@@ -212,15 +274,15 @@ void loadComand(SCREEN *sc, BUFFER *bff, CLI *cli, ARCHIVE *archive) {
                         n = atoi(bff->parameter2);  // convertir a int
                         strncpy(cli->namearch, bff->parameter1, sizeof(cli->namearch) - 1);
                         cli->namearch[sizeof(cli->namearch) - 1] = '\0';
-                        writeTopMemoryProcesses(archive, sc, bff->parameter1, n);
+                        writeTopMemoryProcesses(archive, sc, cli,bff->parameter1, n);
                     } 
                     else {
-                        strcpy(cli->message, "ERROR DE SINTAXIS: proc topmem [int]");
-                        printMessage(sc, cli->message);
+                        strcpy(cli->message1, "ERROR DE SINTAXIS: proc topmem [int]");
+                        printMessage(sc, cli);
                     }
                 } else {
-                    strcpy(cli->message, "ERROR: parámetro desconocido");
-                    printMessage(sc, cli->message);
+                    strcpy(cli->message1, "ERROR: parámetro desconocido");
+                    printMessage(sc, cli);
                 }
             }
         break;
@@ -288,7 +350,7 @@ long getProcessMemorySize(int pid) {
 }
 
 //funcion que se enarga de imprimir en un archivo una lista de los procesos 
-void writeProcessInfo(ARCHIVE *arch, SCREEN *screen, const char *filename) {
+void writeProcessInfo(ARCHIVE *arch, SCREEN *screen, CLI *cli, const char *filename) {
     FILE *outputFile;
     char command[256];
     long memorySize;
@@ -297,7 +359,8 @@ void writeProcessInfo(ARCHIVE *arch, SCREEN *screen, const char *filename) {
     // abrir archivo para escritura
     outputFile = fopen(filename, "w");
     if (outputFile == NULL) {
-        printMessage(screen, "Error: No se pudo crear el archivo");
+        strcpy(cli->message1, "Error: No se pudo crear el archivo");
+        printMessage(screen, cli);
         return;
     }
     
@@ -321,7 +384,8 @@ void writeProcessInfo(ARCHIVE *arch, SCREEN *screen, const char *filename) {
     }
     
     fclose(outputFile);
-    printMessage(screen, "Informacion de procesos guardada exitosamente");
+    strcpy(cli->message2, "Informacion de procesos guardada exitosamente");
+    printMessage(screen, cli);
 }
 
 //funcion para ordenar de forma descendente -> implementada en la func qsort
@@ -337,7 +401,7 @@ int compareProcesses(const void *a, const void *b) {
 
 
 //funcion que nos guarda en un archivo una liste de n procesos 
-void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, const char *filename, int topN) {
+void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, CLI *cli, const char *filename, int topN) {
     FILE *outputFile;
     PROCESS *processes;
     int processCount = 0;
@@ -346,7 +410,8 @@ void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, const char *filename
     
     // Validar parámetros
     if (topN <= 0) {
-        printMessage(screen, "Error: El numero debe ser mayor a 0");
+        strcpy(cli->message1,"Error: El numero debe ser mayor a 0");
+        printMessage(screen, cli);
         return;
     }
     
@@ -354,7 +419,8 @@ void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, const char *filename
     //creamos un arreglo dinamico
     processes = malloc(maxProcesses * sizeof(PROCESS));
     if (processes == NULL) {
-        printMessage(screen, "Error: No se pudo asignar memoria");
+        strcpy(cli->message1, "Error: No se pudo asignar memoria");
+        printMessage(screen, cli);
         return;
     }
     
@@ -386,7 +452,8 @@ void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, const char *filename
     //abrir archivo para escritura
     outputFile = fopen(filename, "w");
     if (outputFile == NULL) {
-        printMessage(screen, "Error: No se pudo crear el archivo");
+        strcpy(cli->message1,"Error: No se pudo crear el archivo");
+        printMessage(screen, cli);
         free(processes);
         return;
     }
@@ -408,26 +475,38 @@ void writeTopMemoryProcesses(ARCHIVE *arch, SCREEN *screen, const char *filename
     
     fclose(outputFile);
     free(processes);
-    
-    char message[100];
-    snprintf(message, sizeof(message), "Top %d procesos guardados en %s", limit, filename);
-    printMessage(screen, message);
+    snprintf(cli->message2, sizeof(cli->message2), "Top %d procesos guardados en %s", limit, filename);
+    printMessage(screen, cli);
 }
 
 
 //FUNCIONES DE IMPRECION-------------------------------------------------------------------
 
 //FUNCION QUE NOS AYUDA A CONTROLAS LA IMPRECION DE LAS VENTANAS 
-int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch,CLI *cC){
+int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch,CLI *cC,CORE *core){
     //verifica si el windipdate es 1 para reimprimir el contenido de la ventana
     if(screen->windupdate[0]){
         printbuffer(screen, buffer);
     }
     if(screen->windupdate[1]){
-        printMessage(screen, cC->message);
+        printMessage(screen, cC);
     }
     if(screen->windupdate[2]){
-        printArchive(screen, arch,buffer,cC);
+        if(cC->cliState == 1){
+            printSTATE1(screen);
+        }
+        else if(cC->cliState == 2){
+            printArchive(screen, arch,buffer,cC);
+        }
+        else if(cC->cliState == 3){
+            printPROY2(screen,core);
+        }
+    }
+    if(screen->windupdate[3]){
+        printLISTwaiting(screen,cC,core);
+    }
+    if(screen->windupdate[4]){
+        printLISTexecute(screen,cC,core);
     }
     return 0;
 }
@@ -437,20 +516,34 @@ int windowcontrol(SCREEN *screen,BUFFER *buffer, ARCHIVE *arch,CLI *cC){
 void printbuffer(SCREEN *screen, BUFFER *bufferControl){
     werase(screen->wind[0]);//limpia el contenido de la ventana
     box(screen->wind[0], 0, 0);//dibuja un cuadro en el borde o alrrededor de la ventana
-    mvwprintw(screen->wind[0],1,1,"-> ");  
-    mvwprintw(screen->wind[0],1,3,"%s",bufferControl->buffer);//cordenadas donde se imprimara el contenido del buffer
+    mvwprintw(screen->wind[0],1,1,"#$ ");  
+    mvwprintw(screen->wind[0],1,5,"%s",bufferControl->buffer);//cordenadas donde se imprimara el contenido del buffer
     screen->windupdate[0] = 0;//ponemos el estdo en ya actualizado
     wrefresh(screen->wind[0]);//refresca la ventana
 
 }
 
 //funcion para imprimir mensajes
-void printMessage(SCREEN *screen, char *message){
+void printMessage(SCREEN *screen, CLI *cli){
     werase(screen->wind[1]);
     box(screen->wind[1], 0, 0);
-    mvwprintw(screen->wind[1],1,1,"%s",message);//cordenas en donde imprimimos el mensaje
+    mvwprintw(screen->wind[1],1,1,"%s",cli->message1);//cordenas en donde imprimimos el mensaje
+    mvwprintw(screen->wind[1],2,1,"%s",cli->message2);
+    mvwprintw(screen->wind[1],4,1,"%s",cli->message3);
+    mvwprintw(screen->wind[1],5,1,"--%s",cli->message4);
     screen->windupdate[1] = 0;
     wrefresh(screen->wind[1]);
+}
+
+void printSTATE1(SCREEN *screen){
+    werase(screen->wind[2]);
+    box(screen->wind[2], 0, 0);
+    mvwprintw(screen->wind[2],1,1,"INGRESE AL PROYECTO:");
+    mvwprintw(screen->wind[2],2,1,"PROY1");
+    mvwprintw(screen->wind[2],3,1,"PROY2");
+    screen->windupdate[2] = 0;
+    wrefresh(screen->wind[2]);
+    
 }
 
 //funcion para imprimir los procesos o el directorio /proc/

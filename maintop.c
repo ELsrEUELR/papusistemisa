@@ -5,8 +5,11 @@
 #include <ncurses.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "funtop.h"
+#include "proyct2.h"
+#include "lista.h"
 
 int main(){
     initscr();//inicializa pantalla de ncurses
@@ -20,9 +23,10 @@ int main(){
     CLI cliControl;       //MANEJA EL CLI
     ARCHIVE archive;      //PARA MANEJAR DIRECTORIOS
     PROCESS process;      //PARA MANEJAR EL CONTENIDO DE CADA PROCESO
+    CORE core;
 
     //FUNCION QUE SE ENCARGA DE TODA LA EJECUCION
-    initial(&cliControl,&bufferControl, &screenControl, &archive, &process);
+    initial(&cliControl,&bufferControl, &screenControl, &archive, &process, &core);
     
     endwin();//finaliza el ncurses
     return 0;
