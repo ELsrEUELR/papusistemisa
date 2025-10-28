@@ -589,7 +589,9 @@ void *thread_instructions(void *argumentos){
     
 
     pthread_mutex_lock(args->mutex);
+
     execution_processes(args->sc, args->bff, args->cli, args->core, args->n_lista); 
+    
     pthread_mutex_unlock(args->mutex);
 
     free(args);
